@@ -1,39 +1,96 @@
 <?php if (!defined('BASEPATH')) exit('No direct script access allowed');
-
 /**
-* Message:: a library for giving feedback to the user
-*
-* @author  Adam Jackett
-* @url http://www.darkhousemedia.com/
-* @version 1.2.0
-*/
-
+ * A message library for giving feedback to the user
+ *
+ * @author	Adam Jackett
+ * @url		http://www.darkhousemedia.com/
+ * @version	1.2.0
+ */
 class CI_Message {
 	
+	/**
+	 * Holds the CI super object
+	 *
+	 * @var object
+	 */
 	public $CI;
+	
+	/**
+	 * Contains all messages that have to be outputted
+	 *
+	 * @var	array
+	 */
 	public $messages = array();
+	
+	/**
+	 * The wrapper to be appended and prepended to the messages
+	 *
+	 * @var	array
+	 */
 	public $wrapper = array('', '');
 
-	public function __construct($config=null){    
+	/**
+	 * Constructor
+	 */
+	public function __construct($config = NULL)
+	{    
+		
 		$this->CI =& get_instance();        
 		$this->CI->load->library('session');
 		
-		if($this->CI->session->flashdata('_messages')) $this->messages = $this->CI->session->flashdata('_messages');
+		if ($this->CI->session->flashdata('_messages'))
+		{ 
+			$this->messages = $this->CI->session->flashdata('_messages');
+		}
 		
-		if(is_array($config)) $this->initialize($config);
+		if (is_array($config))
+		{
+			$this->initialize($config);
+		}
+		
 	}
 	
-	public function initialize($config){
-		if(!is_array($config)) return false;
+	/**
+	 * Initialize configuration
+	 *
+	 * Loops the config array and assign the values to the respective object property
+	 * @param 	array 	configuration values
+	 * @return 	bool
+	 */
+	public function initialize($config)
+	{
 		
-		foreach($config as $key => $val){
+		if ( ! is_array($config)) 
+		{
+			return FALSE;
+		}
+		
+		foreach ($config as $key => $val)
+		{
 			$this->$key = $val;
 		}
 	}
 	
-	public function set($type, $message, $flash=FALSE, $group=FALSE){
-		if(!is_array($message)) $message = array($message);
-		foreach($message as $msg){
+	/**
+	 * Set a new message
+	 *
+	 * Create a new message object and assigns is to the session
+	 * @param 	string	type of message
+	 * @param	mixed	actual message(s)
+	 * @param	bool	whether to preserve the message for an additional request
+	 * @param	mixed	message group
+	 * @return 	bool
+	 */
+	public function set($type, $message, $flash = FALSE, $group = FALSE)
+	{
+		
+		if ( ! is_array($message)) 
+		{
+			$message = array($message);
+		}
+		
+		foreach ($message as $msg)
+		{
 			$obj = new stdClass();
 			$obj->message = $msg;
 			$obj->type = $type;
@@ -43,51 +100,121 @@ class CI_Message {
 		}
 		
 		$flash_messages = array();
-		foreach($this->messages as $msg){
-			if($msg->flash) $flash_messages[] = $msg;
+		
+		foreach ($this->messages as $msg)
+		{
+			if ($msg->flash)
+			{
+				$flash_messages[] = $msg;
+			}
 		}
-		if(count($flash_messages)) $this->CI->session->set_flashdata('_messages', $flash_messages);
+		
+		if (count($flash_messages)) 
+		{
+			$this->CI->session->set_flashdata('_messages', $flash_messages);
+			return TRUE;
+		}
+		
+		return FALSE;
+		
 	}
 	
-	public function display($group=FALSE, $wrapper=FALSE){
+	/**
+	 * Display messages
+	 *
+	 * Proxy for quickly displaying a bunch of messages
+	 * @param	mixed	name of a message group you want to display
+	 * @param	mixed	wrapper to be appended and prepend to the messages
+	 * @return 	void
+	 */
+	public function display($group = FALSE, $wrapper = FALSE)
+	{
 		echo $this->get($group, $wrapper);
 	}
 	
-	public function get($group=FALSE, $wrapper=FALSE){
+	/**
+	 * Get messages
+	 *
+	 * Creates a string of all messages
+	 * @param	mixed	name of a message group you want to display
+	 * @param	mixed	wrapper to be appended and prepend to the messages
+	 * @return 	string	
+	 */
+	public function get($group = FALSE, $wrapper = FALSE)
+	{
 		$content = '';
-		if(count($this->messages)){
+		
+		if (count($this->messages))
+		{
 			$output = array();
-			foreach($this->messages as $msg){
-				if($msg->group == $group){
-					if(!isset($output[$msg->type])) $output[$msg->type] = array();
+			
+			foreach ($this->messages as $msg)
+			{
+				if ($msg->group == $group)
+				{
+					if ( ! isset($output[$msg->type])) 
+					{
+						$output[$msg->type] = array();
+					}
+					
 					$output[$msg->type][] = $msg->message;
 				}
 			}
+			
 			$content .= ($wrapper !== FALSE ? $wrapper[0] : $this->wrapper[0])."\r\n";
-			foreach($output as $type => $messages){
+			foreach ($output as $type => $messages)
+			{
 				$content .= '<div class="message message-'.$type.'">'."\r\n";
-				foreach($messages as $msg){
+				
+				foreach ($messages as $msg)
+				{
 					$content .= '<p>'.$msg.'</p>'."\r\n";
 				}
+				
 				$content .= '</div>'."\r\n";
 			}
+			
 			$content .= ($wrapper !== FALSE ? $wrapper[1] : $this->wrapper[1])."\r\n";
 		}
+		
 		return $content;
 	}
 
-	public function validation_errors(){
-		if(!function_exists('validation_errors')) $this->CI->load->helper('form');
-
+	/**
+	 * Validation errors
+	 *
+	 * Gets all validation errors from the form validation class and puts those in an array
+	 * @return 	array
+	 */
+	public function validation_errors()
+	{
+		
+		if( ! function_exists('validation_errors')) 
+		{
+			$this->CI->load->helper('form');
+		}
+		
 		$temp_errors = explode("\n", strip_tags(validation_errors()));
 		$errors = array();
-		foreach($temp_errors as $e){
-			if(!empty($e)) $errors[] = $e;
+		foreach ($temp_errors as $e)
+		{
+			if ( ! empty($e)) 
+			{	
+				$errors[] = $e;
+			}
 		}
+		
 		return $errors;
 	}
 
-	public function keep(){
+	/**
+	 * Keep messages
+	 *
+	 * Preserve the messages for an additional request
+	 * @return 	void
+	 */
+	public function keep()
+	{
 		$this->CI->session->keep_flashdata('_messages');
 	}
 
