@@ -143,14 +143,17 @@ class CI_Message {
 	public function get($group = FALSE, $wrapper = FALSE)
 	{
 		$content = '';
+		$form_val = $this->validation_errors();
 		
-		if (count($this->messages))
+		if (count($this->messages) OR count($form_val))
 		{
-			$output = array();
 			
-			foreach ($this->messages as $msg)
+			$output = array();
+			$messages = array_merge($this->messages, $form_val);
+			
+			foreach ($messages as $msg)
 			{
-				if ($msg->group == $group)
+				if ($msg->group == $group OR $group === FALSE)
 				{
 					if ( ! isset($output[$msg->type])) 
 					{
@@ -183,13 +186,13 @@ class CI_Message {
 	/**
 	 * Validation errors
 	 *
-	 * Gets all validation errors from the form validation class and puts those in an array
+	 * Gets all validation errors from the form validation library and put these in an array of message objects.
 	 * @return 	array
 	 */
 	public function validation_errors()
 	{
 		
-		if( ! function_exists('validation_errors')) 
+		if ( ! function_exists('validation_errors')) 
 		{
 			$this->CI->load->helper('form');
 		}
@@ -200,7 +203,12 @@ class CI_Message {
 		{
 			if ( ! empty($e)) 
 			{	
-				$errors[] = $e;
+				$error = new StdClass;
+				$error->message = $e;
+				$error->type = 'error';
+				$error->flash = FALSE;
+				$error->group = 'form_val';
+				$errors[] = $error;
 			}
 		}
 		
