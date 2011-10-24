@@ -226,7 +226,7 @@ class CI_Message {
 				$error->message = $e;
 				$error->type = 'error';
 				$error->flash = FALSE;
-				$error->group = 'form_val';
+				$error->group = 'form_validation';
 				$errors[] = $error;
 			}
 		}
