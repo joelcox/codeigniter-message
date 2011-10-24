@@ -182,11 +182,30 @@ class CI_Message {
 		
 		return $content;
 	}
+	
+	/**
+	 * Set validation errors
+	 *
+	 * Allows you to manually write validation errors to the session
+	 * instead of calling validation_errors() in get(). Handy if you 
+	 * redirect before calling get().
+	 * @return 	void
+	 */
+	public function set_validation_errors()
+	{
+						
+		foreach ($this->validation_errors() as $error)
+		{
+			$this->set('error', $error->message, TRUE, 'form_validation');
+		}
+		
+	}
 
 	/**
 	 * Validation errors
 	 *
-	 * Gets all validation errors from the form validation library and put these in an array of message objects.
+	 * Gets all validation errors from the form validation library and 
+	 * put these in an array of message objects.
 	 * @return 	array
 	 */
 	public function validation_errors()
@@ -226,4 +245,4 @@ class CI_Message {
 		$this->CI->session->keep_flashdata('_messages');
 	}
 
-} 
+}
